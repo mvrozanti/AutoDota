@@ -6,13 +6,14 @@
 #include<iostream>
 #include<thread>
 #include<map>
+#include<vector>
 #pragma comment(lib, "user32.lib")
 
 using namespace std;
 /* Globals */
 int ScreenX = GetDeviceCaps(GetDC(0), HORZRES);
 int ScreenY = GetDeviceCaps(GetDC(0), VERTRES);
-BYTE* ScreenData = new BYTE[3 * ScreenX*ScreenY];
+vector<BYTE> ScreenData(3 * ScreenX*ScreenY);
 bool isPicking = false;
 
 inline void ScreenCap() {
@@ -29,9 +30,11 @@ inline void ScreenCap() {
 	bmi.biSizeImage = ScreenX * ScreenY;
 	SelectObject(hdcMem, hBitmap);
 	BitBlt(hdcMem, 0, 0, ScreenX, ScreenY, hdc, 0, 0, SRCCOPY);
-	GetDIBits(hdc, hBitmap, 0, ScreenY, ScreenData, (BITMAPINFO*)&bmi, DIB_RGB_COLORS);
+	GetDIBits(hdc, hBitmap, 0, ScreenY, &ScreenData[0], (BITMAPINFO*)&bmi, DIB_RGB_COLORS);
 	DeleteDC(hdcMem);
 	ReleaseDC(NULL, hdc);
+	DeleteObject(hBitmap);
+	delete &bmi;
 }
 
 inline int PosR(int x, int y) {
@@ -50,6 +53,10 @@ inline int* colorAt(int x, int y) {
 	return new int[3]{ PosR(x,y), PosG(x,y), PosB(x,y) };
 }
 
+inline tuple<BYTE, BYTE, BYTE> colorAt2(int x, int y) {
+	return{ PosR(x,y),PosG(x,y),PosB(x,y) };
+}
+
 void clickAt(int x, int y) {
 	POINT cursorPos;
 	GetCursorPos(&cursorPos);
@@ -65,24 +72,19 @@ void tryPickMid() {
 		int time1 = time(0);
 		ScreenCap();
 		int time2 = time(0);
-		//cout << time2 - time1 << endl;
-		int* boardColor = colorAt(1680, 10);//(top bar when you're about to enter game)
-		int* midColor = colorAt(276, 949);
-		if (midColor[0] == 31 && midColor[1] == 60 && midColor[2] == 68) {
+		cout << time2 - time1 << endl;
+		auto boardColor = colorAt2(1680, 10);//(top bar when you're about to enter game)
+		auto midColor = colorAt2(276, 949);
+		if(midColor == make_tuple(31,60,68)){
 			clickAt(276, 949);
 			isPicking = false;
 		}
-		else if (
-			(boardColor[0] != 38 || boardColor[1] != 42 || boardColor[2] != 47)) {
+		else if (boardColor == make_tuple(38,42,47)){
 			Sleep(10);
 		}
 		else if (tries++ == 1000) {
 			isPicking = false;
 		}
-		delete[] midColor;
-		delete[] boardColor;
-		int time3 = time(0);
-		cout << time3 - time1 << endl;
 	}
 }
 
@@ -159,12 +161,6 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
 			addToStack(9);
 			break;
 		case 110://del (try pick mid)
-			/*POINT p;
-			GetCursorPos(&p);
-			ScreenCap();
-			int* color = colorAt(p.x, p.y);
-			cout << "CursorAt(" << p.x << "," << p.y << ") = ";
-			cout << color[0] << "," << color[1] << "," << color[2] << endl;*/
 			if (!isPicking) {
 				isPicking = true;
 				tryPickMid();
