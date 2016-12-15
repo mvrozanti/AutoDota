@@ -1,22 +1,26 @@
 // DotaItemMover.cpp : Defines the entry point for the console application.
 //
 
-#include "stdafx.h"
+#include "CImg.h"
 #include<windows.h>
 #include<iostream>
 #include<thread>
 #include<map>
 #include<vector>
+#include<fstream>
 #pragma comment(lib, "user32.lib")
-
 using namespace std;
 /* Globals */
 int ScreenX = GetDeviceCaps(GetDC(0), HORZRES);
 int ScreenY = GetDeviceCaps(GetDC(0), VERTRES);
 vector<BYTE> ScreenData(3 * ScreenX*ScreenY);
+vector<BYTE> referenceImage;
+const char* referenceFile = "C:\\Users\\Nexor\\Desktop\\Untitled.png";
 bool isPicking = false;
+int* referenceDragPoint;
+void pick();
 
-inline void ScreenCap() {
+void ScreenCap() {
 	HDC hdc = GetDC(GetDesktopWindow());
 	HDC hdcMem = CreateCompatibleDC(hdc);
 	HBITMAP hBitmap = CreateCompatibleBitmap(hdc, ScreenX, ScreenY);
@@ -34,7 +38,6 @@ inline void ScreenCap() {
 	DeleteDC(hdcMem);
 	ReleaseDC(NULL, hdc);
 	DeleteObject(hBitmap);
-	delete &bmi;
 }
 
 inline int PosR(int x, int y) {
@@ -50,7 +53,8 @@ inline int PosB(int x, int y) {
 }
 
 inline int* colorAt(int x, int y) {
-	return new int[3]{ PosR(x,y), PosG(x,y), PosB(x,y) };
+	int* color = new int[3]{ PosR(x,y), PosG(x,y), PosB(x,y) };
+	return color;
 }
 
 inline tuple<BYTE, BYTE, BYTE> colorAt2(int x, int y) {
@@ -66,54 +70,147 @@ void clickAt(int x, int y) {
 	SetCursorPos(cursorPos.x, cursorPos.y);
 }
 
+bool colorApprox(tuple<BYTE, BYTE, BYTE> t1, tuple<BYTE, BYTE, BYTE> t2) {
+	return abs(((int)get<0>(t1)) - ((int)get<0>(t2))) < 45
+		&& abs(((int)get<1>(t1)) - ((int)get<1>(t2))) < 45
+		&& abs(((int)get<2>(t1)) - ((int)get<2>(t2))) < 45;
+}
+
+void printTuple(tuple<BYTE, BYTE, BYTE> t) {
+	cout << (int)get<0>(t) << ',' << (int)get<1>(t) << ',' << (int)get<2>(t);
+}
+
+
+int selected_hero = -1;
+int MONKEY = 0;
+
+map<int, int*> HERO_POS = {
+	{ 0, new int[2] { 1112,415 } }
+};
+
+void pickHero() {
+	int* pickPoint = new int[2]{ 1420, 794 };
+	if (selected_hero == MONKEY) {
+		int* monkeyPoint = HERO_POS.at(MONKEY);
+		clickAt(monkeyPoint[0], monkeyPoint[1]);
+		Sleep(50);
+		clickAt(pickPoint[0], pickPoint[1]);
+	}
+}
+
 void tryPickMid() {
 	int tries = 0;
 	while (isPicking) {
-		int time1 = time(0);
+		time_t time1 = time(0);
 		ScreenCap();
-		int time2 = time(0);
+		time_t time2 = time(0);
 		cout << time2 - time1 << endl;
-		auto boardColor = colorAt2(1680, 10);//(top bar when you're about to enter game)
-		auto midColor = colorAt2(276, 949);
-		if(midColor == make_tuple(31,60,68)){
-			clickAt(276, 949);
+		auto direColor = colorAt2(298, 943);
+		auto radiantColor = colorAt2(253, 965);
+		auto goColor = make_tuple(12, 213, 27);
+		cout << "direColor = ";
+		printTuple(direColor);
+		cout << endl;
+		cout << "radiantColor = ";
+		printTuple(radiantColor);
+		cout << endl;
+		cout << "expected = ";
+		printTuple(goColor);
+		cout << endl;
+		if (colorApprox(direColor, goColor)) {
+			clickAt(298, 943);
+			cout << '\a' << '\a' << '\a' << '\a' << '\a';
 			isPicking = false;
 		}
-		else if (boardColor == make_tuple(38,42,47)){
-			Sleep(10);
+		else if (colorApprox(radiantColor, goColor)) {
+			clickAt(253, 965);
+			cout << '\a' << '\a' << '\a' << '\a' << '\a';
+			isPicking = false;
 		}
 		else if (tries++ == 1000) {
 			isPicking = false;
 		}
 	}
+	/*hero selection (it is assured that we are past
+	lane pick so we can choose hero)*/
+	pickHero();
 }
 
+bool isSlotPosSet = false;
 map<int, int*> SLOT_POS = {
-	//{ 0, new int[2]{ 1579,799 } },
+	/*
+	OLD TIMES   (NOICE)
 	{ 4, new int[2] { 1499,1020} },
 	{ 5, new int[2] { 1579,1020} },
 	{ 6, new int[2] { 1657,1020} },
 	{ 7, new int[2] { 1499,963 } },
 	{ 8, new int[2] { 1579,963 } },
 	{ 9, new int[2] { 1657,963 } }
+			_,--,
+		 .-'---./_    __
+		/o \\     "-.' /
+		\  //    _.-'._\
+		 `"\)--"`			     */
+		 /*{ 1, new int[2]{ 1210,1065 } },
+		 { 2, new int[2]{ 1271,1065 } },
+		 { 3, new int[2]{ 1333,1065 } },
+		 { 4, new int[2]{ 1205,1021 } },
+		 { 5, new int[2]{ 1267,1019 } },
+		 { 6, new int[2]{ 1324,1012 } },
+		 { 7, new int[2]{ 1213,976 } },
+		 { 8, new int[2]{ 1268,978 } },
+		 { 9, new int[2]{ 1326,977 } } < -RECENT SHITTY TIMES*/
+
+		 // << U P D A T E D >>
+		 { 4, new int[2]{   -9, -44} },
+		 { 5, new int[2]{  +62, -44} },
+		 { 6, new int[2]{ +125, -44} },
+		 { 7, new int[2]{   -2, -90} },
+		 { 8, new int[2]{  +62, -90} },
+		 { 9, new int[2]{ +125, -90} }   /* these are the offsets in relation to the tiny sword pointing to total physical damage*/
 };
 
-int from = -1, to = -1;
+void mouseUp() {
+	thread t(mouse_event, MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
+	t.join();
+}
 
-void exec() {
+int from = -1, to = -1;
+void exec(int times) {
 	int* slotPos1 = SLOT_POS.at(from);
 	int* slotPos2 = SLOT_POS.at(to);
 	POINT saved;
 	GetCursorPos(&saved);
-	SetCursorPos(slotPos1[0], slotPos1[1]);
+	SetCursorPos(referenceDragPoint[0] + slotPos1[0], referenceDragPoint[1] + slotPos1[1]);
+	Sleep(40);
 	mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0);
-	SetCursorPos(slotPos2[0], slotPos2[1]);
-	//Sleep(1);
+	Sleep(30);
+	SetCursorPos((referenceDragPoint[0] + slotPos1[0] + slotPos2[0]) / 2, (referenceDragPoint[1] + slotPos1[1] + slotPos2[1]) / 2);
+	Sleep(50);
+	SetCursorPos(referenceDragPoint[0] + slotPos2[0], referenceDragPoint[1] + slotPos2[1]);
+	Sleep(30);
 	mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
 	SetCursorPos(saved.x, saved.y);
 }
 
+void findReferencePointForDrag() {
+	ScreenCap();
+	for (int i = 1068/*x loc for base template*/; i < ScreenX; i++) {
+		if (colorApprox(colorAt2(i, 1064), make_tuple(127, 127, 127)/*color of template*/)) {
+			referenceDragPoint = new int[2]{ i, 1064 };
+			return;
+		}
+	}
+	referenceDragPoint = new int[2]{ -1, -1 };
+	cout << '\a' << '\a' << '\a';
+}
+
 void addToStack(int slot) {
+	if (!isSlotPosSet) {
+		findReferencePointForDrag();
+		cout << "Reference Drag Point:" << referenceDragPoint[0] << ',' << referenceDragPoint[1] << endl;
+		isSlotPosSet = true;
+	}
 	cout << "added to stack: " + slot << endl;
 	if (from == -1 && to == -1) {
 		from = slot;
@@ -123,9 +220,9 @@ void addToStack(int slot) {
 		to = slot;
 		cout << "from=" + from << endl;;
 		if (from != to) {
-			exec();
+			exec(2);
 		}
-		cout << "exec'd";
+		cout << "exec'd" << endl;
 		from = to = -1;
 	}
 	else if (from != -1 && to != -1) {
@@ -135,13 +232,36 @@ void addToStack(int slot) {
 }
 
 HHOOK hHook;
+thread t;
+void pick() {
+	if (!t.joinable()) {
+		isPicking = true;
+		t = thread(tryPickMid);
+	}
+	else {
+		::TerminateThread(t.native_handle(), 0);
+		t.detach();
+		isPicking = false;
+		pick();
+	}
+}
+
 LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
 	if (wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN)
 	{
 		PKBDLLHOOKSTRUCT pKey = (PKBDLLHOOKSTRUCT)lParam;
-		cout << pKey->scanCode << " ";
-		cout << pKey->vkCode << "     ";
+		cout << pKey->scanCode << "(";
+		cout << pKey->vkCode << ") ";
 		switch (pKey->vkCode) {
+		case 97://1
+			addToStack(1);
+			break;
+		case 98://2
+			addToStack(2);
+			break;
+		case 99://3
+			addToStack(3);
+			break;
 		case 100://4
 			addToStack(4);
 			break;
@@ -160,11 +280,21 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
 		case 105://9
 			addToStack(9);
 			break;
+		case 106: {//*
+			POINT saved;
+			GetCursorPos(&saved);
+			ScreenCap();
+			int* color = colorAt(saved.x, saved.y);
+			cout << saved.x << ',' << saved.y << '=' << color[0] << ',' << color[1] << ',' << color[2] << endl;
+			delete[] color;
+			break;
+		}
 		case 110://del (try pick mid)
-			if (!isPicking) {
-				isPicking = true;
-				tryPickMid();
-			}
+			pick();
+			break;
+		case 111:///
+			selected_hero = MONKEY;
+			cout << "MONKEY selected" << endl;
 			break;
 		}
 	}
@@ -182,6 +312,7 @@ void startLogging() {
 }
 
 int main() {
+	cout << "Runnning..." << endl;
 	if ((GetKeyState(VK_NUMLOCK) & 0x0001) == 0) {
 		keybd_event(VK_NUMLOCK, 0x45, KEYEVENTF_EXTENDEDKEY, 0);
 		keybd_event(VK_NUMLOCK, 0x45, KEYEVENTF_EXTENDEDKEY | KEYEVENTF_KEYUP, 0);
