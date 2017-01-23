@@ -70,9 +70,9 @@ void clickAt(int x, int y) {
 }
 
 bool colorApprox(tuple<BYTE, BYTE, BYTE> t1, tuple<BYTE, BYTE, BYTE> t2) {
-	return abs(((int)get<0>(t1)) - ((int)get<0>(t2))) < 45
-		&& abs(((int)get<1>(t1)) - ((int)get<1>(t2))) < 45
-		&& abs(((int)get<2>(t1)) - ((int)get<2>(t2))) < 45;
+	return abs(((int)get<0>(t1)) - ((int)get<0>(t2))) < 10
+		&& abs(((int)get<1>(t1)) - ((int)get<1>(t2))) < 10
+		&& abs(((int)get<2>(t1)) - ((int)get<2>(t2))) < 10;
 }
 
 void printTuple(tuple<BYTE, BYTE, BYTE> t) {
@@ -173,12 +173,15 @@ map<int, int*> SLOT_POS = {
 		 { 9, new int[2]{ 1326,977 } } < -RECENT SHITTY TIMES*/
 
 		 // << U P D A T E D >>
-		 { 4, new int[2]{   -2, -44} },
-		 { 5, new int[2]{  +62, -44} },
-		 { 6, new int[2]{ +145, -44} },
-		 { 7, new int[2]{   -2, -90} },
-		 { 8, new int[2]{  +70, -90} },
-		 { 9, new int[2]{ +145, -90} }   /* these are the offsets in relation to the tiny sword pointing to total physical damage*/
+		{ 1, new int[2]{   +20, +60} },
+		{ 2, new int[2]{   +75, +60} },
+		{ 3, new int[2]{  +150, +60} },
+		{ 4, new int[2]{   +20, +10} },
+		{ 5, new int[2]{   +75, +10} },
+		{ 6, new int[2]{  +150, +10} },
+		{ 7, new int[2]{   +20, -44} },
+		{ 8, new int[2]{   +75, -44} },
+		{ 9, new int[2]{  +150, -44} }
 };
 
 int from = -1, to = -1;
@@ -201,9 +204,9 @@ void exec(int times) {
 
 void findReferencePointForDrag() {
 	ScreenCap();
-	for (int i = 1068/*x loc for base template*/; i < ScreenX; i++) {
-		if (colorApprox(colorAt2(i, 1064), make_tuple(127, 127, 127)/*color of template*/)) {
-			referenceDragPoint = new int[2]{ i, 1064 };
+	for (int i = 1122/*x loc for base template*/; i < ScreenX; i++) {
+		if (colorApprox(colorAt2(i, 990), make_tuple(48, 50, 48)/*color of template*/)) {
+			referenceDragPoint = new int[2]{ i, 990 };
 			return;
 		}
 	}
