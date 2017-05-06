@@ -1,5 +1,4 @@
 ﻿  DotaItemMover.cpp
-d:\dropbox\programming\c++\dotaitemmover\dotaitemmover\dotaitemmover.cpp(82): warning C4244: 'initializing': conversion from 'time_t' to 'int', possible loss of data
-d:\dropbox\programming\c++\dotaitemmover\dotaitemmover\dotaitemmover.cpp(84): warning C4244: 'initializing': conversion from 'time_t' to 'int', possible loss of data
-  DotaItemMover.vcxproj -> D:\Dropbox\Programming\C++\DotaItemMover\Debug\DotaItemMover.exe
-  DotaItemMover.vcxproj -> D:\Dropbox\Programming\C++\DotaItemMover\Debug\DotaItemMover.pdb (Full PDB)
+d:\google drive\programming\c++\dotaitemmover\dotaitemmover\dotaitemmover.cpp(107): warning C4018: '<': signed/unsigned mismatch
+  DotaItemMover.vcxproj -> D:\Google Drive\Programming\C++\DotaItemMover\Debug\DotaItemMover.exe
+  DotaItemMover.vcxproj -> D:\Google Drive\Programming\C++\DotaItemMover\Debug\DotaItemMover.pdb (Full PDB)

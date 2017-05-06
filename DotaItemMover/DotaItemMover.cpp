@@ -5,6 +5,8 @@
 #include<windows.h>
 #include<iostream>
 #include<thread>
+#include<stdio.h>
+#include<stdlib.h>
 #include<map>
 #include<vector>
 #include<fstream>
@@ -18,6 +20,8 @@ vector<BYTE> ScreenData(3 * ScreenX*ScreenY);
 bool isPicking = false;
 int* referenceDragPoint;
 void pick();
+bool verbose = true;
+bool hook = true;
 
 void ScreenCap() {
 	HDC hdc = GetDC(GetDesktopWindow());
@@ -70,9 +74,9 @@ void clickAt(int x, int y) {
 }
 
 bool colorApprox(tuple<BYTE, BYTE, BYTE> t1, tuple<BYTE, BYTE, BYTE> t2) {
-	return abs(((int)get<0>(t1)) - ((int)get<0>(t2))) < 10
-		&& abs(((int)get<1>(t1)) - ((int)get<1>(t2))) < 10
-		&& abs(((int)get<2>(t1)) - ((int)get<2>(t2))) < 10;
+	return abs(((int)get<0>(t1)) - ((int)get<0>(t2))) < 20
+		&& abs(((int)get<1>(t1)) - ((int)get<1>(t2))) < 20
+		&& abs(((int)get<2>(t1)) - ((int)get<2>(t2))) < 20;
 }
 
 void printTuple(tuple<BYTE, BYTE, BYTE> t) {
@@ -116,22 +120,20 @@ void tryPickMid() {
 		cout << time2 - time1 << endl;
 		auto direColor = colorAt2(298, 943);
 		auto radiantColor = colorAt2(253, 965);
-		auto goColor = make_tuple(12, 213, 27);
+		auto goColorRadiant = make_tuple(13, 180, 28);
+		auto goColorDire = make_tuple(13, 210, 28);
 		cout << "direColor = ";
 		printTuple(direColor);
 		cout << endl;
 		cout << "radiantColor = ";
 		printTuple(radiantColor);
 		cout << endl;
-		cout << "expected = ";
-		printTuple(goColor);
-		cout << endl;
-		if (colorApprox(direColor, goColor)) {
+		if (colorApprox(direColor, goColorDire)) {
 			clickAt(298, 943);
 			isPicking = false;
 			beep(2, 100);
 		}
-		else if (colorApprox(radiantColor, goColor)) {
+		else if (colorApprox(radiantColor, goColorRadiant)) {
 			clickAt(253, 965);
 			isPicking = false;
 			beep(2, 100);
@@ -150,38 +152,22 @@ void tryPickMid() {
 long double last_item_change_time = 0;
 map<int, int*> SLOT_POS = {
 	/*
-	OLD TIMES   (NOICE)
-	{ 4, new int[2] { 1499,1020} },
-	{ 5, new int[2] { 1579,1020} },
-	{ 6, new int[2] { 1657,1020} },
-	{ 7, new int[2] { 1499,963 } },
-	{ 8, new int[2] { 1579,963 } },
-	{ 9, new int[2] { 1657,963 } }
 			_,--,
 		 .-'---./_    __
 		/o \\     "-.' /
 		\  //    _.-'._\
-		 `"\)--"`			     */
-		 /*{ 1, new int[2]{ 1210,1065 } },
-		 { 2, new int[2]{ 1271,1065 } },
-		 { 3, new int[2]{ 1333,1065 } },
-		 { 4, new int[2]{ 1205,1021 } },
-		 { 5, new int[2]{ 1267,1019 } },
-		 { 6, new int[2]{ 1324,1012 } },
-		 { 7, new int[2]{ 1213,976 } },
-		 { 8, new int[2]{ 1268,978 } },
-		 { 9, new int[2]{ 1326,977 } } < -RECENT SHITTY TIMES*/
+		 `"\)--"`		    */
 
 		 // << U P D A T E D >>
 		{ 1, new int[2]{   +20, +60} },
-		{ 2, new int[2]{   +75, +60} },
-		{ 3, new int[2]{  +150, +60} },
-		{ 4, new int[2]{   +20, +10} },
-		{ 5, new int[2]{   +75, +10} },
-		{ 6, new int[2]{  +150, +10} },
-		{ 7, new int[2]{   +20, -44} },
-		{ 8, new int[2]{   +75, -44} },
-		{ 9, new int[2]{  +150, -44} }
+		{ 2, new int[2]{   +85, +60} },
+		{ 3, new int[2]{  +155, +60} },
+		{ 4, new int[2]{   +25, +10} },
+		{ 5, new int[2]{   +85, +10} },
+		{ 6, new int[2]{  +155, +10} },
+		{ 7, new int[2]{   +25, -40} },
+		{ 8, new int[2]{   +85, -40} },
+		{ 9, new int[2]{  +155, -40} }
 };
 
 int from = -1, to = -1;
@@ -205,8 +191,9 @@ void exec(int times) {
 void findReferencePointForDrag() {
 	ScreenCap();
 	for (int i = 1122/*x loc for base template*/; i < ScreenX; i++) {
-		if (colorApprox(colorAt2(i, 990), make_tuple(48, 50, 48)/*color of template*/)) {
-			referenceDragPoint = new int[2]{ i, 990 };
+		if (colorApprox(colorAt2(i, 1077), make_tuple(48, 50, 48)/*color of template*/)) {
+			//&& colorApprox(colorAt2(i + 6, 990), make_tuple(48, 50, 48)/*color of template*/)) {
+			referenceDragPoint = new int[2]{ i + 15, 990 };
 			return;
 		}
 	}
@@ -264,11 +251,22 @@ void pick() {
 	}
 }
 
+string dll_path;
+
+
+void hack() {
+	// This is where we'll put the stuff we read from file
+	//char buffer[100];
+	//ifstream finout(fileName, ios_base::in | ios_base::out | ios_base::binary);
+}
+
 LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
 	if (wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN)
 	{
 		PKBDLLHOOKSTRUCT pKey = (PKBDLLHOOKSTRUCT)lParam;
-		cout << pKey->vkCode << " ";
+		if (verbose) {
+			cout << pKey->vkCode << " ";
+		}
 		switch (pKey->vkCode) {
 		case 97://1
 			addToStack(1);
@@ -298,12 +296,12 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
 			addToStack(9);
 			break;
 		case 106: {//*
-			POINT saved;
-			GetCursorPos(&saved);
-			ScreenCap();
-			int* color = colorAt(saved.x, saved.y);
-			cout << saved.x << ',' << saved.y << '=' << color[0] << ',' << color[1] << ',' << color[2] << endl;
-			delete[] color;
+			thread(hack);
+			break;
+		}
+		case 109: {//-
+			//verbose = !verbose;
+			hook = !hook;
 			break;
 		}
 		case 110://del (try pick mid)
@@ -314,6 +312,7 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
 			break;
 		}
 	}
+
 	CallNextHookEx(hHook, nCode, wParam, lParam);
 	return 0;
 }
@@ -328,6 +327,7 @@ void startLogging() {
 }
 
 int main() {
+	//hack();
 	cout << "Runnning..." << endl;
 	if ((GetKeyState(VK_NUMLOCK) & 0x0001) == 0) {//if numlock not enabled
 		keybd_event(VK_NUMLOCK, 0x45, KEYEVENTF_EXTENDEDKEY, 0);//enable
